@@ -22,9 +22,6 @@ if ($errcode == 1){  //user's email address not found.
 }
 
 $errcode = NULL; 
-
-
-
 ?>
 
 
@@ -42,47 +39,48 @@ $errcode = NULL;
  }
 
 
-checkInputs = function() {
+function checkInputs() {
 
   alert("checkInputs function is running.");
 
-  return false;
   var myForm = document.getElementById("userCreate"); 
   var emailElement = document.getElementById("email");
-  var emailAddy = emailElement.value().toLowerCase();
-  emailElement.value = emailAddy; 
-
-  var FNameElement = document.getElementByID("FName");
-  var FName = FNameElement.value();
+  var emailAddy = emailElement.value;
+  
+  var FNameElement = document.getElementById("FName");
+  var FName = FNameElement.value;
  
-  var LNameElement = document.getElementByID("LName");
-  var LName = LNameElement.value();
+  var LNameElement = document.getElementById("LName");
+  var LName = LNameElement.value;
 
-  var PasswordElement = document.getElementByID("Passowrd");
-  var Password = PasswordElement.value(); 
+  var PasswordElement = document.getElementById("Password");
+  var Password = PasswordElement.value; 
 
-  var ErrorElement = document.getElementByID("Errors");
+  var ErrorElement = document.getElementById("Errors");
+  ErrorElement.innerHTML = "";
 
   var inputsGood = true;
  
-  if (!validateEmail(emailAddy) || emailAddy==NULL || emailAddy==""){
+  if (!validateEmail(emailAddy) || emailAddy==null || emailAddy==""){
     ErrorElement.innerHTML+= "Detected an invalid email address format.<br>";  
-    global inputsGood = false;
+    inputsGood = false;
+  } else {
+    emailElement.value = emailAddy.toLowerCase(); 
   }
 
-  if ((FName == NULL)|| (FName =="")){
+  if ((FName == null)|| (FName =="")){
     ErrorElement.innerHTML+= "First Name cannot be blank.<br>";  
-    global inputsGood = false;
+    inputsGood = false;
   }
     
-  if ((LName == NULL)||(LName =="")){
+  if ((LName == null)||(LName =="")){
     ErrorElement.innerHTML+= "Last Name cannot be blank.<br>";  
-    global inputsGood = false;
+    inputsGood = false;
   }
 
-  if ((Password.length <8)||(Password == NULL)){
+  if ((Password.length <8)||(Password == null)){
     ErrorElement.innerHTML+= "Password must be at least 8 characters.<br>";  
-    global inputsGood = false;
+    inputsGood = false;
   }
  
   console.log(inputsGood); 
@@ -100,9 +98,9 @@ Last Name:
 <input type ="text" id="LName" name = "LName"></input>
 
 Password: 
-<input type ="Password" name = "Password"></input>
+<input type ="Password" name = "Password" id="Password"></input>
 
-<input type ="submit" name ="Create" value ="Create Account" onclick="checkInputs()"></input>
+<input type ="submit" name ="Create" value ="Create Account"></input>
 </form>
 <br>
 
