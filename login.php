@@ -3,8 +3,9 @@ ini_set('display_errors', 'On');
 error_reporting(E_ALL);
 session_start();
 
-$path = __DIR__."/closed/secret.php";
+$path = __DIR__.'/closed/secret.php';
 include $path;
+
 
 //Initial connection setup.                                                  
 $dbhost = 'oniddb.cws.oregonstate.edu';
@@ -47,7 +48,7 @@ function checkPwd ($email, $pwd, $db_handle) {
 
   if ($row == NULL){
     $_SESSION = array();
-    header("Location: welcome.php?errcode=1");
+    echo("1");
 
   } elseif (password_verify($pwd, $row["Password"] )) {
 
@@ -56,11 +57,7 @@ function checkPwd ($email, $pwd, $db_handle) {
     echo "login successful.";
 
   } else {
-
-    //$_SESSION["user"] = $row["FName"];
-    header("Refresh:5; url = userpage.php");
-    //echo "Hello " . $_SESSION["user"] . ". Redirecting to your flight";
-    echo " records page. Please wait momentarily."; 
+    echo "2";
   }
 }
 
