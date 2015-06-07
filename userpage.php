@@ -124,17 +124,14 @@ function displayFlights($sql_handle, $pilot_id){
     foreach ($row as $key=>$value){
       if ($key != "ID"){
 	echo "<td>".$value;
-
-        //adding hidden inputs to capture data from a row for editing
-        echo "<input type=\"hidden\" name =\"".$key."\"";
-        echo "value =\"".$value."\" \></td>";
-      }
-        echo "<input type=\"hidden\" name =\"fltid\"";
-        echo "value =\"".intval($row["ID"])."\" \></td>";
+       } 
     }
     echo '</tr>';
   }
-  echo '</table></div>';
+  echo '</table>';
+  echo '<form action = "addflt.php" method = "post">';
+  echo '<input type ="submit" value = "Add A Flight"></form></div>';
+
   $stmt1->close();
 
 }
@@ -168,8 +165,8 @@ function displayMyAcft($sql_handle, $pilot_id){
   echo '~fischmaj/final/userpage.php"  method = "post"';
   echo 'onsubmit = "return false;" >';
   echo '<table><tr><th/><th/><th>Make</th><th>Model</th>';
-  echo '<th>Year</th><th>Tail Number</th><th>Engines</th>';
-  echo '<th>Engines</th><th>Complex</th></tr>';
+  echo '<th>Year</th><th>Tail # </th><th>Engines</th>';
+  echo '<th>Complex</th></tr>';
 
   while ($row = $result->fetch_assoc()){
     echo '<tr>';
@@ -184,19 +181,22 @@ function displayMyAcft($sql_handle, $pilot_id){
 
     echo "<td>".$editbutton."</td><td>".$deletebutton."</td>";
     foreach ($row as $key=>$value){
-      if ($key != "id"){
-	echo "<td>".$value;
-
-        //adding hidden inputs to capture data from a row for editing
-        echo "<input type=\"hidden\" name =\"".$key."\"";
-        echo "value =\"".$value."\" \></td>";
+      if ($key != "id" && $key !="pilot_id"){
+        if ($key == "complex"){
+	  echo "<td>";
+          echo $value ? 'true' : 'false';
+	} else{
+	  echo'<td>';
+	  echo $value ? $value: 'NO Entry';
+	}
       }
-        echo "<input type=\"hidden\" name =\"fltid\"";
-        echo "value =\"".intval($row["id"])."\" \></td>";
     }
     echo '</tr>';
   }
-  echo '</table></form></div>';
+  echo '</table></form>';
+
+  echo '<form action = "addAircraft.php" method = "post">';
+  echo '<input type ="submit" value = "Add An Aircraft"></form></div>';
   $stmt1->close();
 
 }
@@ -230,7 +230,7 @@ function displayMyEvents($sql_handle, $pilot_id){
 
   $result = $stmt1->get_result();
   
-  echo '<div id="myAcft">';
+  echo '<div id="myEvents">';
   echo ' <form action = "http://web.engr.oregonstate.edu/';
   echo '~fischmaj/final/userpage.php"  method = "post"';
   echo 'onsubmit = "return false;" >';
@@ -263,6 +263,17 @@ function displayMyEvents($sql_handle, $pilot_id){
     echo '</tr>';
   }
   echo '</table></form></div>';
+
+  echo '<div id = "addEventButton">';
+  echo '<form action = "addEvents.php" method = "post">';
+  echo '<input type ="submit" value = "Add Events To A Flight"></form>';
+  echo '</div>';
+
+  echo '<div id = "createEventButton">';
+  echo '<form action = "createEvents.php" method = "post">';
+  echo '<input type ="submit" value = "Create New Events"></form>';
+  echo '</div>';
+
   $stmt1->close();
 
 }
@@ -327,6 +338,35 @@ function editFlt($sql_handle, $params){
 }
 
 
+/****************************************
+ ** addFlt - this function queries DB
+ ** with a list of parameters for a flt
+ ** and updates the flt info of that flt
+ ** number. 
+ ****************************************/
+function addFlt($sql_handle, $params){  
+  
+  //Prepare query
+  if(!($stmt = $sql_handle->prepare('INSERT INTO  Flight
+                                     (pilot_id, dep_date, dep_time, arr_date,
+                                     arr_time, acft_id)
+                                     VALUES 
+                                     (?,?,?,?,?,?)'))){
+    echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
+  }
+  //Bind Parameters
+  if(!$stmt->bind_param("issssi", $params[0], $params[1], $params[2],
+			$params[3], $params[4], $params[5])){
+    echo "Bind failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  //Execute query
+  if (!$stmt->execute()) {
+    echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  $stmt->close();
+}
+
+
 //EXECUTION BEGINS HERE
 //First, get/set the pilot id
 //if we're just coming from the login page, we need $email for query
@@ -350,6 +390,14 @@ if (isset($_POST['editflt'])){
   	     $_POST["dep_time"], $_POST["arr_date"], $_POST["arr_time"],
   	     $_POST["acft_id"]);
   editFlt($mysql_handle, $params);
+
+}
+if (isset($_POST['addflt'])){
+  $params = array();
+  array_push($params, $_SESSION["pilot_id"], $_POST["dep_date"],
+  	     $_POST["dep_time"], $_POST["arr_date"], $_POST["arr_time"],
+  	     $_POST["acft_id"]);
+  addFlt($mysql_handle, $params);
 
 }
 
