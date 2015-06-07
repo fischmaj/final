@@ -53,16 +53,6 @@ HandleRequest = function (){
       errorStr += "Log in to the account using the login line above."; 
     } else if (errorcode == 0) {
       var myForm = document.getElementById("newUserForm");
-
-      /*
-      console.log(myForm);      
-      for (node in myForm.childNodes){
-	if (node.type="input"){
-	  console.log(node+ myForm.childNodes[node]+myForm.childNodes[node].value);
-	}
-      }
-      */
-
       myForm.onsubmit =function() {return true};
       myForm.submit();
     }
@@ -130,7 +120,6 @@ newUserCheckInputs = function(){
 
 
 submitUser = function() {
-  console.log("In submitUser()");
   if (newUserCheckInputs()){
 	var newUserCheckUnique = new XMLHttpRequest();
 	newUserCheckUnique.open("POST", "newuser1.php", true); 
