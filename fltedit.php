@@ -87,7 +87,7 @@ function displayFlight($sql_handle){
     echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
   }
   //Bind Parameters
-  if(!$stmt1->bind_param("s", $_POST["edit"])){
+  if(!$stmt1->bind_param("s", $_POST["editflt"])){
     echo "Bind failed: (" . $stmt1->errno . ") " . $stmt1->error;
   }
   //Execute query

@@ -54,11 +54,11 @@ function displayAcft(){
   //2nd row contains the editable form
   echo '<form action = "userpage.php" method ="post" >';
   echo '<tr><input type ="hidden" name ="addacft" value = "null"></td>';   
-  echo '<td><input type ="text" name ="Make" value = "Cessna"/></td>';
-  echo '<td><input type ="text" name ="Model" value = "C172"/></td>';
-  echo '<td><input type ="text" name ="Year" value = "1967"/></td>';
-  echo '<td><input type ="text" name ="Tail #" value = "N5678"/></td>';
-  echo '<td><input type ="number" name ="Engines" min ="0" max ="10"';
+  echo '<td><input type ="text" name ="make" value = "Cessna"/></td>';
+  echo '<td><input type ="text" name ="model" value = "C172"/></td>';
+  echo '<td><input type ="text" name ="year" value = "1967"/></td>';
+  echo '<td><input type ="text" name ="tail_number" value = "N5678"/></td>';
+  echo '<td><input type ="number" name ="engines" min ="0" max ="10"';
   echo ' value = "1"/></td>';
   
   echo '<td><select name ="complex">';

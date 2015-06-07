@@ -79,7 +79,7 @@ function displayFlights($sql_handle, $pilot_id){
 
   //Prepare query
   if(!($stmt1 = $sql_handle->prepare('SELECT 
-                                  f.ID, dep_date, dep_time, arr_date, arr_time,
+                                  f.id, dep_date, dep_time, arr_date, arr_time,
                                   tail_number 
                                   FROM Flight f
                                   INNER JOIN Aircraft a
@@ -99,8 +99,9 @@ function displayFlights($sql_handle, $pilot_id){
   $result = $stmt1->get_result();
   
   echo '<div id = "myFlights">';
-  echo '<table><tr><th/><th/><th>Departure Date</th><th>Departure Time</th>';
-  echo '<th>Arrival Date</th><th>Arrival Time</th><th>Aircraft ID</th></tr>';
+  echo '<table><tr><th/><th/><th></th><th>Departure Date</th>';
+  echo '<th>Departure Time</th>';
+  echo '<th>Arrival Date</th><th>Arrival Time</th><th>Tail #</th></tr>';
   
 
   while ($row = $result->fetch_assoc()){
@@ -109,20 +110,32 @@ function displayFlights($sql_handle, $pilot_id){
     $editbutton = '<form action ="http://web.engr.oregonstate.edu/';
     $editbutton = $editbutton . '~fischmaj/final/fltedit.php" ';
     $editbutton = $editbutton . 'method="post" >';
-    $editbutton = $editbutton . '<button type="submit" name ="edit" ';
-    $editbutton = $editbutton . 'value ="' . $row['ID'] . '" />Edit';
+    $editbutton = $editbutton . '<button type="submit" name ="editflt" ';
+    $editbutton = $editbutton . 'value ="' . $row['id'] . '" />Edit';
     $editbutton = $editbutton . "</button></form>";
+ 
+    //building a delete button for each flight. 
+    $deletebutton = '<form action ="http://web.engr.oregonstate.edu/';
+    $deletebutton = $deletebutton . '~fischmaj/final/userpage.php" ';
+    $deletebutton = $deletebutton . 'method="post" >';
+    $deletebutton = $deletebutton . '<button type="submit" name="deleteflt" ';
+    $deletebutton = $deletebutton . 'value ="' . $row['id'] . '" />Delete';
+    $deletebutton = $deletebutton . "</button></form>";
+ 
+    //building an add Events button for each flight. 
+    $eventbutton = '<form action ="http://web.engr.oregonstate.edu/';
+    $eventbutton = $eventbutton . '~fischmaj/final/events.php" ';
+    $eventbutton = $eventbutton . 'method="post" >';
+    $eventbutton = $eventbutton . '<button type="submit" name="editEvents" ';
+    $eventbutton = $eventbutton . 'value ="' . $row['id'];
+    $eventbutton = $eventbutton . '" />Add/Edit Events';
+    $eventbutton = $eventbutton . "</button></form>";
 
-    $deletebutton = '<form action ="fltdelete.php" ';
-    $deletebutton = $deletebutton.'onsubmit={"return fltDelete();"}>';
-    $deletebutton = $deletebutton . '<button type="submit" name = "delete" ';
-    $deletebutton = $deletebutton.'value = "'.$row['ID'] . '"' ;
-    $deletebutton = $deletebutton.'onclick ="fltDelete()" \>';
-    $deletebutton = $deletebutton. 'Delete</button></form>';
 
-    echo "<td>".$editbutton."</td><td>".$deletebutton."</td>";
+    echo "<td>".$editbutton."</td><td>".$deletebutton."</td><td>";
+    echo $eventbutton.'</td>';
     foreach ($row as $key=>$value){
-      if ($key != "ID"){
+      if ($key != "id"){
 	echo "<td>".$value;
        } 
     }
@@ -161,23 +174,29 @@ function displayMyAcft($sql_handle, $pilot_id){
   $result = $stmt1->get_result();
   
   echo '<div id="myAcft">';
-  echo ' <form action = "http://web.engr.oregonstate.edu/';
-  echo '~fischmaj/final/userpage.php"  method = "post"';
-  echo 'onsubmit = "return false;" >';
   echo '<table><tr><th/><th/><th>Make</th><th>Model</th>';
   echo '<th>Year</th><th>Tail # </th><th>Engines</th>';
   echo '<th>Complex</th></tr>';
 
   while ($row = $result->fetch_assoc()){
     echo '<tr>';
-    //building an edit and delete button for each flight. 
-    $editbutton = "<input type=\"submit\" name = \"edit\" ";
-    $editbutton =$editbutton."value =\"Edit\" id=\"".$row['id'] ."\"";
-    $editbutton =$editbutton."onclick = \"fltEdit(".$row['id'].")\" />";
 
-    $deletebutton = "<input type=\"button\" name = \"delete\" ";
-    $deletebutton = $deletebutton."value =\"Delete\" id=\" ".$row['id'] ."\"";
-    $deletebutton = $deletebutton."onclick =\"fltDelete()\" \>";
+    //building an edit button for each acft. 
+    $editbutton = '<form action ="http://web.engr.oregonstate.edu/';
+    $editbutton = $editbutton . '~fischmaj/final/acftedit.php" ';
+    $editbutton = $editbutton . 'method="post" >';
+    $editbutton = $editbutton . '<button type="submit" name ="editacft" ';
+    $editbutton = $editbutton . 'value ="' . $row['id'] . '" />Edit';
+    $editbutton = $editbutton . "</button></form>";
+
+    //building a delete button for each acft. 
+    $deletebutton = '<form action ="http://web.engr.oregonstate.edu/';
+    $deletebutton = $deletebutton . '~fischmaj/final/userpage.php" ';
+    $deletebutton = $deletebutton . 'method="post" >';
+    $deletebutton = $deletebutton . '<button type="submit" name="deleteacft" ';
+    $deletebutton = $deletebutton . 'value ="' . $row['id'] . '" />Delete';
+    $deletebutton = $deletebutton . "</button></form>";
+
 
     echo "<td>".$editbutton."</td><td>".$deletebutton."</td>";
     foreach ($row as $key=>$value){
@@ -337,6 +356,43 @@ function editFlt($sql_handle, $params){
   $stmt->close();
 }
 
+/****************************************
+ ** editAcft - this function queries DB
+ ** with a list of parameters for an 
+ ** an aircraft to change it's info. These
+ ** changes will cascade to flights and 
+ ** events table.  NOTE: pilot_id cannot
+ ** be updated, since this represents the
+ ** owner of the aircraft/user of the site.
+ ** Pilot's should not be swapping planes 
+ ** on this site 
+ ****************************************/
+function editAcft($sql_handle, $params){  
+
+  //Prepare query
+  if(!($stmt = $sql_handle->prepare('UPDATE Aircraft
+                                     SET
+                                     make = ?,
+                                     model = ?, 
+                                     year = ?, 
+                                     tail_number = ?, 
+                                     engines = ?,
+                                     complex = ?
+                                     WHERE id = ? '))){
+    echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
+  }
+  //Bind Parameters
+  if(!$stmt->bind_param("ssssiii", $params[1], $params[2], $params[3],
+			$params[4], $params[5], $params[6],$params[0])){
+    echo "Bind failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  //Execute query
+  if (!$stmt->execute()) {
+    echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  $stmt->close();
+}
+
 
 /****************************************
  ** addFlt - this function queries DB
@@ -345,7 +401,7 @@ function editFlt($sql_handle, $params){
  ** number. 
  ****************************************/
 function addFlt($sql_handle, $params){  
-  
+
   //Prepare query
   if(!($stmt = $sql_handle->prepare('INSERT INTO  Flight
                                      (pilot_id, dep_date, dep_time, arr_date,
@@ -354,6 +410,7 @@ function addFlt($sql_handle, $params){
                                      (?,?,?,?,?,?)'))){
     echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
   }
+
   //Bind Parameters
   if(!$stmt->bind_param("issssi", $params[0], $params[1], $params[2],
 			$params[3], $params[4], $params[5])){
@@ -367,7 +424,91 @@ function addFlt($sql_handle, $params){
 }
 
 
-//EXECUTION BEGINS HERE
+/****************************************
+ ** addAcft - this function queries DB
+ ** with a list of parameters for a flt
+ ** and updates the flt info of that flt
+ ** number. 
+ ****************************************/
+function addAcft($sql_handle, $params){  
+
+
+  //Prepare query
+  if(!($stmt = $sql_handle->prepare('INSERT INTO  Aircraft
+                                     (make, model, year, tail_number, 
+                                     engines, complex, pilot_id)
+                                     VALUES 
+                                     (?,?,?,?,?,?,?)'))){
+    echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
+  }
+  //Bind Parameters
+  if(!$stmt->bind_param("sssssii", $params[1], $params[2], $params[3],
+			$params[4], $params[5], $params[6], $params[0])){
+    echo "Bind failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  //Execute query
+  if (!$stmt->execute()) {
+    echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  $stmt->close();
+}
+
+
+/****************************************
+ ** deleteFlight - this function queries DB
+ ** to delete an individual flight.  This  
+ ** cascades to deleting the associated
+ ** events.
+ ****************************************/
+function deleteFlight($sql_handle, $param){  
+
+
+  //Prepare query
+  if(!($stmt = $sql_handle->prepare('DELETE FROM  Flight
+                                    WHERE id = ?'))){
+    echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
+  }
+  //Bind Parameters
+  if(!$stmt->bind_param("i", $param)){
+    echo "Bind failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  //Execute query
+  if (!$stmt->execute()) {
+    echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  $stmt->close();
+}
+
+
+/****************************************
+ ** deleteAcft - this function queries DB
+ ** to delete an aircraft.  This will 
+ ** cascade to deleting the associated
+ ** flights and events.
+ ****************************************/
+function deleteAcft($sql_handle, $param){  
+
+
+  //Prepare query
+  if(!($stmt = $sql_handle->prepare('DELETE FROM  Aircraft
+                                    WHERE id = ?'))){
+    echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
+  }
+  //Bind Parameters
+  if(!$stmt->bind_param("i", $param)){
+    echo "Bind failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  //Execute query
+  if (!$stmt->execute()) {
+    echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  $stmt->close();
+}
+
+/**********************************************************************
+ **EXECUTION BEGINS HERE
+ *********************************************************************/
+
 //First, get/set the pilot id
 //if we're just coming from the login page, we need $email for query
 if (!isset($_SESSION["pilot_id"])){
@@ -380,7 +521,11 @@ if (!isset($_SESSION["pilot_id"])){
   }
 }
 
+
+
 pageTop();
+
+var_dump($_POST);
 
 $pilot_id = $_SESSION["pilot_id"];
 
@@ -392,6 +537,7 @@ if (isset($_POST['editflt'])){
   editFlt($mysql_handle, $params);
 
 }
+
 if (isset($_POST['addflt'])){
   $params = array();
   array_push($params, $_SESSION["pilot_id"], $_POST["dep_date"],
@@ -399,6 +545,34 @@ if (isset($_POST['addflt'])){
   	     $_POST["acft_id"]);
   addFlt($mysql_handle, $params);
 
+}
+
+if (isset($_POST['addacft'])){
+  $params = array();
+  array_push($params, $_SESSION["pilot_id"], $_POST["make"],
+  	     $_POST["model"], $_POST["year"], $_POST["tail_number"],
+  	     $_POST["engines"], $_POST["complex"]);
+  addAcft($mysql_handle, $params);
+
+}
+
+if (isset($_POST['editacft'])){
+  $params = array();
+  array_push($params, $_POST["editacft"], $_POST["make"],
+  	     $_POST["model"], $_POST["year"], $_POST["tail_number"],
+  	     $_POST["engines"], $_POST["complex"]);
+  editAcft($mysql_handle, $params);
+
+}
+
+if (isset($_POST['deleteacft'])){
+  $param = $_POST['deleteacft']; 
+  deleteAcft($mysql_handle, $param);
+}
+
+if (isset($_POST['deleteflt'])){
+  $param = $_POST['deleteflt']; 
+  deleteFlight($mysql_handle, $param);
 }
 
 displayMyAcft($mysql_handle, $pilot_id);

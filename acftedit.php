@@ -70,59 +70,21 @@ function getAcftId($sql_handle, $param){
 }
 
 /****************************************
- ** displayFlight - this function displays
+ ** displayEditAcft - this function displays
  ** the info of the flight to be edited 
  ** and builds the form. 
  ****************************************/
-function displayFlight($sql_handle){  
- 
-  
-  echo '<div id = "myFlights">'; 
-  echo '<table><tr><th>Departure Date</th><th>Departure Time</th>';
-  echo '<th>Arrival Date</th><th>Arrival Time</th><th>Aircraft ID</th></tr>';
- 
-  //2nd row contains the editable form
-  echo '<form action = "userpage.php" method ="post" >';
-  echo '<tr><input type ="hidden" name ="addflt" value = "null"></td>';   
-  echo '<td><input type ="text" name ="dep_date" value = "2015-01-31"/></td>';
-  echo '<td><input type ="text" name ="dep_time" value = "14:31:00"/></td>';
-  echo '<td><input type ="text" name ="arr_date" value = "2015-01-31"/></td>';
-  echo '<td><input type ="text" name ="arr_time" value = "15:27:00"/></td>';
-
-  $aircraft = getMyAcft($sql_handle, $_SESSION["pilot_id"]);
-  echo '<td><select name ="acft_id">';
-  foreach ($aircraft as $acft_row){
-    echo '<option value ="'. $acft_row["id"] .'" selected>';
-    echo $acft_row["tail_number"].'</option>';
-  }
-  echo '</select></td> </tr>';
-  
-  echo '</table></div>';
-  echo '<input type = "submit" value = "update" ></form><br>';
-
-  echo 'NOTE: Only your previously stored aircraft are options here. ';
-  echo 'To apply a different aircraft to this flight, they must be added';
-  echo ' first.<br>Click <a href = "addaircraft.php">';
-  echo 'here</a> to go to the ADD aircraft form page.';
-  
-}
-
-
-/****************************************
- ** getMyAcft - this function queries DB
- ** with the pilot ID, returns all flights 
- ** as an object.
- ****************************************/
-function getMyAcft($sql_handle, $pilot_id){  
+function displayEditAcft($sql_handle){  
 
   //Prepare query
   if(!($stmt1 = $sql_handle->prepare('SELECT *
                                   FROM Aircraft
-                                  WHERE pilot_id = ? '))){
+                                  WHERE id = ? '))){
     echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
   }
+
   //Bind Parameters
-  if(!$stmt1->bind_param("s", $pilot_id)){
+  if(!$stmt1->bind_param("s", $_POST["editacft"])){
     echo "Bind failed: (" . $stmt1->errno . ") " . $stmt1->error;
   }
   //Execute query
@@ -132,15 +94,55 @@ function getMyAcft($sql_handle, $pilot_id){
 
   $result = $stmt1->get_result();
   
-  $aircraft = array();
-  
-  while ($row=$result->fetch_assoc()){
-    array_push($aircraft, $row);
+  echo '<div id = "myFlights">'; 
+  echo '<table><tr><th>Make</th><th>Model</th><th>Year</td>';
+  echo '<th>Tail #</th><th>Engines</th><th>Complex</th></tr>';
+ 
+  $row = $result->fetch_assoc();
+  echo '<tr>';
+
+  foreach ($row as $key=>$value){
+    if ($key != "id" && $key !="pilot_id"){
+      if ($key == "complex"){
+	echo "<td>";
+	echo $value ? 'true' : 'false';
+      } else {
+	echo'<td>';
+	echo $value ? $value: 'NO Entry';
+      }
+    }
   }
+
+    echo '</tr>';  
   
+ 
+  //2nd row contains the editable form
+  echo '<form action = "userpage.php" method ="post" >';
+  echo '<tr><input type ="hidden" name ="editacft"';
+  echo ' value = "'.$row['id'].'"></td>';
+  echo '<td><input type ="text" name ="make" value = "Cessna"/></td>';
+  echo '<td><input type ="text" name ="model" value = "C172"/></td>';
+  echo '<td><input type ="text" name ="year" value = "1967"/></td>';
+  echo '<td><input type ="text" name ="tail_number" value = "N5678"/></td>';
+  echo '<td><input type ="number" name ="engines" min ="0" max ="10"';
+  echo ' value = "1"/></td>';
+  
+  echo '<td><select name ="complex">';
+  echo '<option value ="0" selected>False</option>';
+  echo '<option value =1" >True</option>';
+  echo '</select></td> </tr>';
+  
+  echo '</table></div>';
+  echo '<input type = "submit" value = "Update" ></form><br>';
+  echo '<form action = "userpage.php" method = "post">';
+  echo '<input type = "submit" value = "Cancel"></form>';
+
+  echo 'NOTE: "Model" and "Year" are required. "Engines" is required and ';
+  echo 'must be 0 (glider aircraft) or greater.';
   $stmt1->close();
-  return $aircraft;
 }
+
+
   
 
 
@@ -153,6 +155,6 @@ if (!isset($_SESSION["pilot_id"])){
 
   
 pageTop();
-displayFlight($mysql_handle);
+displayEditAcft($mysql_handle);
 
 ?>

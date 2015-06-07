@@ -40,7 +40,6 @@ function pageTop(){
 
 }
 
-
 /****************************************
  ** getAcftId - this function queries DB
  ** with the tail number, and returns that 
@@ -70,41 +69,70 @@ function getAcftId($sql_handle, $param){
 }
 
 /****************************************
- ** displayFlight - this function displays
- ** the info of the flight to be edited 
- ** and builds the form. 
+ ** displayFlightEvents - this function 
+ ** displays flight info and builds a  
+ ** table for entering events
  ****************************************/
-function displayFlight($sql_handle){  
- 
+function displayFlightEvents($sql_handle, $param){  
+    
+  //Prepare query
+  if(!($stmt1 = $sql_handle->prepare('SELECT 
+                                  f.id, dep_date, dep_time, arr_date, arr_time,
+                                  tail_number 
+                                  FROM Flight f
+                                  INNER JOIN Aircraft a
+                                  ON a.ID = f.acft_id
+                                  WHERE f.id = ? '))){
+    echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
+  }
+  //Bind Parameters
+  if(!$stmt1->bind_param("s", $param)){
+    echo "Bind failed: (" . $stmt1->errno . ") " . $stmt1->error;
+  }
+  //Execute query
+  if (!$stmt1->execute()) {
+    echo "Execute failed: (" . $stmt1->errno . ") " . $stmt1->error;
+  }
+
+  $result = $stmt1->get_result();
   
   echo '<div id = "myFlights">'; 
   echo '<table><tr><th>Departure Date</th><th>Departure Time</th>';
   echo '<th>Arrival Date</th><th>Arrival Time</th><th>Aircraft ID</th></tr>';
+  $row = $result->fetch_assoc();
+  echo '<tr>';
  
-  //2nd row contains the editable form
-  echo '<form action = "userpage.php" method ="post" >';
-  echo '<tr><input type ="hidden" name ="addflt" value = "null"></td>';   
-  echo '<td><input type ="text" name ="dep_date" value = "2015-01-31"/></td>';
-  echo '<td><input type ="text" name ="dep_time" value = "14:31:00"/></td>';
-  echo '<td><input type ="text" name ="arr_date" value = "2015-01-31"/></td>';
-  echo '<td><input type ="text" name ="arr_time" value = "15:27:00"/></td>';
-
-  $aircraft = getMyAcft($sql_handle, $_SESSION["pilot_id"]);
-  echo '<td><select name ="acft_id">';
-  foreach ($aircraft as $acft_row){
-    echo '<option value ="'. $acft_row["id"] .'" selected>';
-    echo $acft_row["tail_number"].'</option>';
+  //display the flight data for the flight in question
+  foreach ($row as $key=>$value){
+    if ($key != "id"){
+      echo "<td>".$value."</td>";
+    }
   }
-  echo '</select></td> </tr>';
-  
-  echo '</table></div>';
-  echo '<input type = "submit" value = "update" ></form><br>';
+  echo '</tr></table>';
+  $stmt1->close();  
+   
+  //Query for all of the possible events
+  if($result = $sql_handle->query('SELECT * FROM Event')){
+    echo '<form action ="userpage.php" method ="post" >';
+    //hidden input to record the flight we are adding events to
+    echo '<input type ="hidden" name ="editEvents" ';
+    echo 'value ="'.$param.'">'; //pass the flight whose events are edited
 
-  echo 'NOTE: Only your previously stored aircraft are options here. ';
-  echo 'To apply a different aircraft to this flight, they must be added';
-  echo ' first.<br>Click <a href = "addaircraft.php">';
-  echo 'here</a> to go to the ADD aircraft form page.';
-  
+    //create an input line for each event. 
+    while ($object = $result->fetch_object()){
+      echo $object->name; 
+      echo '<input type = "number" min="0" value ="1" name ="event[';
+      echo $object->name.']"><br>';
+    }
+  } else{
+    echo "Query failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
+  }
+
+  echo '<input type ="submit" value = "Add or Update Events for this';
+  echo ' Flight"></form>';
+  $result->close();
+ 
+
 }
 
 
@@ -144,6 +172,7 @@ function getMyAcft($sql_handle, $pilot_id){
   
 
 
+
 //EXECUTION BEGINS HERE
 //First, check the pilot id session
 if (!isset($_SESSION["pilot_id"])){
@@ -153,6 +182,6 @@ if (!isset($_SESSION["pilot_id"])){
 
   
 pageTop();
-displayFlight($mysql_handle);
+displayFlightEvents($mysql_handle, $_POST["editEvents"]);
 
 ?>
