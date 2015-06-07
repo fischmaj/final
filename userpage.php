@@ -32,6 +32,12 @@ function pageTop(){
   echo "<script src = \"deleteflt.js\"></script>";
   echo "</head>";
   echo "<body>";
+
+  echo '<!-- Code for the top banner -->';
+  echo '<div id="topsplash"><h1>Pilot Logbook </h1>';
+  echo '<h3>Your flight tracking solution</h3>';
+  echo '</div>';
+
 }
 
 
@@ -92,9 +98,7 @@ function displayFlights($sql_handle, $pilot_id){
 
   $result = $stmt1->get_result();
   
-  echo ' <form action = "http://web.engr.oregonstate.edu/';
-  echo '~fischmaj/final/userpage.php"  method = "post"';
-  echo 'onsubmit = "return false;" >';
+  echo '<div id = "myFlights">';
   echo '<table><tr><th/><th/><th>Departure Date</th><th>Departure Time</th>';
   echo '<th>Arrival Date</th><th>Arrival Time</th><th>Aircraft ID</th></tr>';
   
@@ -102,13 +106,19 @@ function displayFlights($sql_handle, $pilot_id){
   while ($row = $result->fetch_assoc()){
     echo '<tr>';
     //building an edit and delete button for each flight. 
-    $editbutton = "<input type=\"submit\" name = \"edit\" ";
-    $editbutton =$editbutton."value =\"Edit\" id=\"".$row['ID'] ."\"";
-    $editbutton =$editbutton."onclick = \"fltEdit(".$row['ID'].")\" />";
+    $editbutton = '<form action ="http://web.engr.oregonstate.edu/';
+    $editbutton = $editbutton . '~fischmaj/final/fltedit.php" ';
+    $editbutton = $editbutton . 'method="post" >';
+    $editbutton = $editbutton . '<button type="submit" name ="edit" ';
+    $editbutton = $editbutton . 'value ="' . $row['ID'] . '" />Edit';
+    $editbutton = $editbutton . "</button></form>";
 
-    $deletebutton = "<input type=\"button\" name = \"delete\" ";
-    $deletebutton = $deletebutton."value =\"Delete\" id=\" ".$row['ID'] ."\"";
-    $deletebutton = $deletebutton."onclick =\"fltDelete()\" \>";
+    $deletebutton = '<form action ="fltdelete.php" ';
+    $deletebutton = $deletebutton.'onsubmit={"return fltDelete();"}>';
+    $deletebutton = $deletebutton . '<button type="submit" name = "delete" ';
+    $deletebutton = $deletebutton.'value = "'.$row['ID'] . '"' ;
+    $deletebutton = $deletebutton.'onclick ="fltDelete()" \>';
+    $deletebutton = $deletebutton. 'Delete</button></form>';
 
     echo "<td>".$editbutton."</td><td>".$deletebutton."</td>";
     foreach ($row as $key=>$value){
@@ -124,7 +134,7 @@ function displayFlights($sql_handle, $pilot_id){
     }
     echo '</tr>';
   }
-  echo '</table></form>';
+  echo '</table></div>';
   $stmt1->close();
 
 }
@@ -258,41 +268,6 @@ function displayMyEvents($sql_handle, $pilot_id){
 }
 
 /****************************************
- ** editFlights - this function queries DB
- ** with the flight ID, and edits that flight
- ** Since tail number is provided but acft id
- ** is required, it calls getAcftId
- ****************************************/
-function editFlights($sql_handle, $params){  
-  
-  $acft_id = getAcftId($sql_handle, $params[4]); 
-
-  //Prepare query
-  if(!($stmt1 = $sql_handle->prepare('UPDATE Flight 
-                                      SET
-                                      dep_date = ?,
-                                      dep_time = ?,
-                                      arr_date = ?, 
-                                      arr_time = ?,
-                                      acft_id = ? 
-                                      WHERE ID = ? '))){
-    echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
-  }
-  //Bind Parameters
-  if(!$stmt1->bind_param("ssssss", $params[0], $params[1], $params[2],
-			 $params[3], $acft_id, $params[5])){
-    echo "Bind failed: (" . $stmt1->errno . ") " . $stmt1->error;
-  }
-  //Execute query
-  if (!$stmt1->execute()) {
-    echo "Execute failed: (" . $stmt1->errno . ") " . $stmt1->error;
-  }
-
-  $stmt1->close();
-
-}
-
-/****************************************
  ** getAcftId - this function queries DB
  ** with the tail number, and returns that 
  ** acft id
@@ -320,26 +295,48 @@ function getAcftId($sql_handle, $param){
   return $row["ID"];
 }
 
-
-
-
-
-
-
-
+/****************************************
+ ** editFlt - this function queries DB
+ ** with a list of parameters for a flt
+ ** and updates the flt info of that flt
+ ** number. 
+ ****************************************/
+function editFlt($sql_handle, $params){  
+  
+  //Prepare query
+  if(!($stmt = $sql_handle->prepare('UPDATE Flight
+                                     SET
+                                     dep_date = ?,
+                                     dep_time = ?, 
+                                     arr_date = ?, 
+                                     arr_time = ?, 
+                                     acft_id = ?
+                                     WHERE id = ? '))){
+    echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
+  }
+  //Bind Parameters
+  if(!$stmt->bind_param("sssssi", $params[1], $params[2], $params[3],
+			$params[4], $params[5], $params[0])){
+    echo "Bind failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  //Execute query
+  if (!$stmt->execute()) {
+    echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  $stmt->close();
+}
 
 
 //EXECUTION BEGINS HERE
-//First, get the pilot id
-
+//First, get/set the pilot id
 //if we're just coming from the login page, we need $email for query
-if (!isset($_SESSION["pilotid"])){
+if (!isset($_SESSION["pilot_id"])){
   if(isset($_POST['email'])){
     $email = $_POST['email']; 
     $_SESSION["pilot_id"] = getPilotID($mysql_handle, $email);
-  } else {
-    header("refresh:5, url = welcome.html");
-    echo "Error- undetected login";
+  } else { //session not set, so revert to welcome page
+    header("refresh:5, url = welcome.php");
+    echo "Error- undetected login- redirecting to logon page";
   }
 }
 
@@ -347,12 +344,15 @@ pageTop();
 
 $pilot_id = $_SESSION["pilot_id"];
 
-if (isset($_POST["edit"])){
-  $params = [ $_POST["dep_date"], $_POST["dep_time"], $_POST["arr_date"], 
-	      $_POST["arr_time"], $_POST["tail_number"],$_POST["fltid"]];
+if (isset($_POST['editflt'])){
+  $params = array();
+  array_push($params, $_POST["editflt"], $_POST["dep_date"],
+  	     $_POST["dep_time"], $_POST["arr_date"], $_POST["arr_time"],
+  	     $_POST["acft_id"]);
+  editFlt($mysql_handle, $params);
 
-  editFlights($mysql_handle, $params);
 }
+
 displayMyAcft($mysql_handle, $pilot_id);
 displayFlights($mysql_handle, $pilot_id);
 displayMyEvents($mysql_handle, $pilot_id);
