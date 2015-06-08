@@ -36,7 +36,10 @@ function pageTop(){
   echo '<!-- Code for the top banner -->';
   echo '<div id="topsplash"><h1>Pilot Logbook </h1>';
   echo '<h3>Your flight tracking solution</h3>';
-  echo '</div>';
+
+  echo '<form action = "welcome.php" method = "post">';
+  echo '<input type= "submit" value = "LOGOUT">';
+  echo '</form></div>';
 
 }
 
@@ -96,7 +99,7 @@ function displayFlightEvents($sql_handle, $param){
 
   $result = $stmt1->get_result();
   
-  echo '<div id = "myFlights">'; 
+  echo '<div id = "myEventEdit">'; 
   echo '<table><tr><th>Departure Date</th><th>Departure Time</th>';
   echo '<th>Arrival Date</th><th>Arrival Time</th><th>Aircraft ID</th></tr>';
   $row = $result->fetch_assoc();
@@ -130,6 +133,10 @@ function displayFlightEvents($sql_handle, $param){
 
   echo '<input type ="submit" value = "Add or Update Events for this';
   echo ' Flight"></form>';
+
+  echo '<form action = "userpage.php" method = "post">';
+  echo '<input type= "submit" value = "Cancel and return to previous page">';
+  echo '</form>';
   $result->close();
  
 

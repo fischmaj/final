@@ -52,3 +52,8 @@ body {
  border: 1px solid white;
  width: 55%;
 }
+
+table {
+ text-align: center;
+ vertical-align: text-top;
+}

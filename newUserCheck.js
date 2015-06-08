@@ -176,7 +176,7 @@ newUserFormCreate = function(){
     var newEmail = document.createElement("INPUT");
     newEmail.type ="text";
     newEmail.id ="newEmail";
-    newEmail.name ="Email"; 
+    newEmail.name ="email"; 
     formElements[5] = newEmail; 
 
 

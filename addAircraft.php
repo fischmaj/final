@@ -36,7 +36,11 @@ function pageTop(){
   echo '<!-- Code for the top banner -->';
   echo '<div id="topsplash"><h1>Pilot Logbook </h1>';
   echo '<h3>Your flight tracking solution</h3>';
-  echo '</div>';
+
+
+  echo '<form action = "welcome.php" method = "post">';
+  echo '<input type= "submit" value = "LOGOUT">';
+  echo '</form></div>';
 
 }
 /****************************************
@@ -47,7 +51,7 @@ function pageTop(){
 function displayAcft(){  
  
   
-  echo '<div id = "myAcft">'; 
+  echo '<div id = "myAcftAdd">'; 
   echo '<table><tr><th>Make</th><th>Model</th><th>Year</th>';
   echo '<th>Tail #</th><th>Engines</th><th>Complex</th></tr>';
  

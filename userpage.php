@@ -36,7 +36,11 @@ function pageTop(){
   echo '<!-- Code for the top banner -->';
   echo '<div id="topsplash"><h1>Pilot Logbook </h1>';
   echo '<h3>Your flight tracking solution</h3>';
-  echo '</div>';
+
+
+  echo '<form action = "welcome.php" method = "post">';
+  echo '<input type= "submit" value = "LOGOUT">';
+  echo '</form></div>';
 
 }
 
@@ -253,6 +257,9 @@ function displayMyEvents($sql_handle, $pilot_id){
   
   echo '<div id="myEvents">';
   echo '<h2> My Events</h2>';
+  echo '<p style ="color:red">These are edited under "My Flights."';
+  echo '  The button below is for adding or deleting new TYPES';
+  echo' of events, rather than individual lines.</p>';
   echo ' <form action = "http://web.engr.oregonstate.edu/';
   echo '~fischmaj/final/userpage.php"  method = "post"';
   echo 'onsubmit = "return false;" >';
@@ -386,6 +393,82 @@ function updateEvent($sql_handle, $params){
   }
   $stmt->close();
 }
+
+
+
+/****************************************
+ ** editEventList - wrapper function that 
+ ** runs a new query for each event 
+ ** passed by the createEvent.php page
+ ****************************************/
+function editEventList($sql_handle, $params){  
+  $numEvents = $params[0]; //This is the count of the number of events
+
+  //cycle through remaining params- each is a pair of event ID and number
+  //and pass each set to the updateEvent function
+  for ($i = 1; $i <$numEvents*2; $i+=2){
+    if($params[$i]== "add" && $params[$i+1] != ""){
+      addEvent($sql_handle, $params[$i+1]);
+    } else {
+      deleteEvent($sql_handle, $params[$i]);
+    }
+  }
+
+}
+
+/****************************************
+ ** addEvent - internal function 
+ ** which runs the queries for the 
+ ** editEventList function.  Uses mySQL Insert
+ ** on duplicate key UPDATE to work with 
+ ** both add and edit. 
+ ****************************************/
+function addEvent($sql_handle, $param){  
+  //Prepare query
+  if(!($stmt = $sql_handle->prepare('INSERT INTO Event
+                                     (name)
+                                     VALUES (?)
+                                     ON DUPLICATE KEY UPDATE name=name 
+                                      '))){
+    echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
+  }
+  //Bind Parameters
+  if(!$stmt->bind_param("s", $param)){
+    echo "Bind failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  //Execute query
+  if (!$stmt->execute()) {
+    echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  $stmt->close();
+}
+
+/****************************************
+ ** deleteEvent - internal function 
+ ** which runs the queries for the 
+ ** editEventList function.  Uses mySQL Insert
+ ** on duplicate key UPDATE to work with 
+ ** both add and edit. 
+ ****************************************/
+function deleteEvent($sql_handle, $param){  
+  //Prepare query
+  if(!($stmt = $sql_handle->prepare('DELETE FROM Event
+                                    WHERE id= ? '))){
+    echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
+  }
+  //Bind Parameters
+  if(!$stmt->bind_param("i", $param)){
+    echo "Bind failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  //Execute query
+  if (!$stmt->execute()) {
+    echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  $stmt->close();
+}
+
+
+
 
 /****************************************
  ** editAcft - this function queries DB
@@ -543,7 +626,7 @@ function deleteAcft($sql_handle, $param){
 //First, get/set the pilot id
 //if we're just coming from the login page, we need $email for query
 if (!isset($_SESSION["pilot_id"])){
-  if(isset($_POST['email'])){
+  if (isset($_POST['email'])){
     $email = $_POST['email']; 
     $_SESSION["pilot_id"] = getPilotID($mysql_handle, $email);
   } else { //session not set, so revert to welcome page
@@ -551,6 +634,7 @@ if (!isset($_SESSION["pilot_id"])){
     echo "Error- undetected login- redirecting to logon page";
   }
 }
+
 
 //Everything below executes only on valid login ($_SESSION["pilot_id"] is set)
 pageTop();
@@ -615,6 +699,19 @@ if (isset($_POST['editEvents'])){
     array_push($params, $value);
   }
   editEvent($mysql_handle, $params);
+}
+
+if (isset($_POST["editEventList"])){
+  $params = array();
+  $count = count($_POST["eventList"]);
+  $eventListArray = $_POST["eventList"];
+  
+  array_push($params, $count);
+  foreach($eventListArray as $key=>$value){
+    array_push($params, $key);
+    array_push($params, $value);
+  }
+  editEventList($mysql_handle, $params);
 }
 
 

@@ -36,7 +36,11 @@ function pageTop(){
   echo '<!-- Code for the top banner -->';
   echo '<div id="topsplash"><h1>Pilot Logbook </h1>';
   echo '<h3>Your flight tracking solution</h3>';
-  echo '</div>';
+
+
+  echo '<form action = "welcome.php" method = "post">';
+  echo '<input type= "submit" value = "LOGOUT">';
+  echo '</form></div>';
 
 }
 
@@ -97,7 +101,7 @@ function displayFlight($sql_handle){
 
   $result = $stmt1->get_result();
   
-  echo '<div id = "myFlights">'; 
+  echo '<div id = "myFlightEdit">'; 
   echo '<table><tr><th>Departure Date</th><th>Departure Time</th>';
   echo '<th>Arrival Date</th><th>Arrival Time</th><th>Aircraft ID</th></tr>';
   
@@ -142,6 +146,10 @@ function displayFlight($sql_handle){
   
   echo '</table></div>';
   echo '<input type = "submit" value = "update" ></form><br>';
+
+  echo '<form action = "userpage.php" method = "post">';
+  echo '<input type= "submit" value = "Cancel and return to previous page">';
+  echo '</form>';
 
   echo 'NOTE: Only your previously stored aircraft are options here.';
   echo 'To apply a different aircraft to this flight, they must be added';
