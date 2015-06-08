@@ -99,6 +99,7 @@ function displayFlights($sql_handle, $pilot_id){
   $result = $stmt1->get_result();
   
   echo '<div id = "myFlights">';
+  echo '<h2>My Flights</h2>';
   echo '<table><tr><th/><th/><th></th><th>Departure Date</th>';
   echo '<th>Departure Time</th>';
   echo '<th>Arrival Date</th><th>Arrival Time</th><th>Tail #</th></tr>';
@@ -174,6 +175,7 @@ function displayMyAcft($sql_handle, $pilot_id){
   $result = $stmt1->get_result();
   
   echo '<div id="myAcft">';
+  echo'<h2>My Aircraft</h2>';
   echo '<table><tr><th/><th/><th>Make</th><th>Model</th>';
   echo '<th>Year</th><th>Tail # </th><th>Engines</th>';
   echo '<th>Complex</th></tr>';
@@ -250,48 +252,29 @@ function displayMyEvents($sql_handle, $pilot_id){
   $result = $stmt1->get_result();
   
   echo '<div id="myEvents">';
+  echo '<h2> My Events</h2>';
   echo ' <form action = "http://web.engr.oregonstate.edu/';
   echo '~fischmaj/final/userpage.php"  method = "post"';
   echo 'onsubmit = "return false;" >';
-  echo '<table><tr><th/><th/><th>Date Accomplished</th><th>Event</th>';
+  echo '<table><tr><th>Date Accomplished</th><th>Event</th>';
   echo '<th>Number</th></tr>';
 
   while ($row = $result->fetch_assoc()){
     echo '<tr>';
-    //building an edit and delete button for each flight. 
-    $editbutton = "<input type=\"submit\" name = \"edit\" ";
-    $editbutton =$editbutton."value =\"Edit\" id=\"".$row['id'] ."\"";
-    $editbutton =$editbutton."onclick = \"fltEdit(".$row['id'].")\" />";
-
-    $deletebutton = "<input type=\"button\" name = \"delete\" ";
-    $deletebutton = $deletebutton."value =\"Delete\" id=\" ".$row['id'] ."\"";
-    $deletebutton = $deletebutton."onclick =\"fltDelete()\" \>";
-
-    echo "<td>".$editbutton."</td><td>".$deletebutton."</td>";
     foreach ($row as $key=>$value){
       if ($key != "id"){
 	echo "<td>".$value;
-
-        //adding hidden inputs to capture data from a row for editing
-        echo "<input type=\"hidden\" name =\"".$key."\"";
-        echo "value =\"".$value."\" \></td>";
       }
-        echo "<input type=\"hidden\" name =\"fltid\"";
-        echo "value =\"".intval($row["id"])."\" \></td>";
     }
     echo '</tr>';
   }
-  echo '</table></form></div>';
-
-  echo '<div id = "addEventButton">';
-  echo '<form action = "addEvents.php" method = "post">';
-  echo '<input type ="submit" value = "Add Events To A Flight"></form>';
-  echo '</div>';
+  echo '</table></form>';
 
   echo '<div id = "createEventButton">';
   echo '<form action = "createEvents.php" method = "post">';
-  echo '<input type ="submit" value = "Create New Events"></form>';
-  echo '</div>';
+  echo '<input type ="submit" value = "Create New Event Types';
+  echo '/Edit Existing Event Types"></form>';
+  echo '</div></div>';
 
   $stmt1->close();
 
@@ -347,6 +330,54 @@ function editFlt($sql_handle, $params){
   //Bind Parameters
   if(!$stmt->bind_param("sssssi", $params[1], $params[2], $params[3],
 			$params[4], $params[5], $params[0])){
+    echo "Bind failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  //Execute query
+  if (!$stmt->execute()) {
+    echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+  }
+  $stmt->close();
+}
+
+/****************************************
+ ** editEvent - wrapper function that 
+ ** runs a new query for each event 
+ ** passed by the event.php page
+ ****************************************/
+function editEvent($sql_handle, $params){  
+  $flightId = $params[0];
+  $numEvents = $params[1]; //This is the count of the number of events
+
+  //cycle through remaining params- each is a pair of event ID and number
+  //and pass each set to the updateEvent function
+  for ($i = 1; $i <$numEvents*2; $i+=2){
+    $eventId = $params[$i+1];
+    $eventNum = $params[$i+2];
+    $paramList = array();
+    array_push($paramList, $flightId, $eventId, $eventNum);
+    updateEvent($sql_handle, $paramList);
+  }   
+}
+
+/****************************************
+ ** updateEvent - internal function 
+ ** which runs the queries for the 
+ ** editEvent function.  Uses mySQL Insert
+ ** on duplicate key UPDATE to work with 
+ ** both add and edit. 
+ ****************************************/
+function updateEvent($sql_handle, $params){  
+  //Prepare query
+  if(!($stmt = $sql_handle->prepare('INSERT INTO Flight_Event
+                                     (fp_id, e_id, number)
+                                     VALUES (?, ?, ?)
+                                     ON DUPLICATE KEY UPDATE
+                                     fp_id =?, e_id = ?, number=? '))){
+    echo "Prepare failed: (" . $sql_handle->errno . ") " . $sql_handle->error;
+  }
+  //Bind Parameters
+  if(!$stmt->bind_param("iiiiii", $params[0], $params[1], $params[2],
+			$params[0], $params[1], $params[2])){
     echo "Bind failed: (" . $stmt->errno . ") " . $stmt->error;
   }
   //Execute query
@@ -521,12 +552,8 @@ if (!isset($_SESSION["pilot_id"])){
   }
 }
 
-
-
+//Everything below executes only on valid login ($_SESSION["pilot_id"] is set)
 pageTop();
-
-var_dump($_POST);
-
 $pilot_id = $_SESSION["pilot_id"];
 
 if (isset($_POST['editflt'])){
@@ -574,6 +601,22 @@ if (isset($_POST['deleteflt'])){
   $param = $_POST['deleteflt']; 
   deleteFlight($mysql_handle, $param);
 }
+
+if (isset($_POST['editEvents'])){
+  $params = array();
+  $eventNum = count($_POST['event']);
+  $eventArray = $_POST['event'];
+
+  array_push($params, $_POST['editEvents']);
+  array_push($params, $eventNum);
+ 
+  foreach ($eventArray as $key=>$value){  
+    array_push($params, $key);
+    array_push($params, $value);
+  }
+  editEvent($mysql_handle, $params);
+}
+
 
 displayMyAcft($mysql_handle, $pilot_id);
 displayFlights($mysql_handle, $pilot_id);

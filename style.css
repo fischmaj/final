@@ -36,4 +36,19 @@ body {
   padding-top: 10px;
 }
 
+#myEvents {
+ border: 1px solid white;
+ width: 40%;
+}
 
+#myAcft {
+ float: left;
+ border: 1px solid white;
+ width: 40%
+}
+
+#myFlights{
+ float: right;
+ border: 1px solid white;
+ width: 55%;
+}
